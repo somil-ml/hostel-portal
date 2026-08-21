@@ -1,4 +1,4 @@
-# GGSIPU EDC Hostel Allocation System (
+# GGSIPU EDC Hostel Allocation System (GGSIPU2608)
 
 ## Overview:
 Hostel allocation at GGSIPU involves managing hundreds of students from different programs with varying requirements - distance from hometown, medical conditions, room preferences, and special accommodation needs. 
@@ -76,6 +76,7 @@ If we had more time, we'd add:
 - Manas
 - Nemish
 - Shashank
-**Team ID : SIH2026-T072**  
+
+## Team ID : SIH2026-T072  
 
 **For:** Smart India Hackathon (SIH) - 2026
