@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GGSIPU EDC - Hostel Allocation Portal 2026</title>
+  <style>
+    :root { --primary: #1e3a8a; --primary-light: #3b82f6; --bg-color: #f8fafc; --card-bg: #ffffff; --text-main: #1e293b; --text-muted: #64748b; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --border: #e2e8f0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+    
+    header { background: linear-gradient(135deg, var(--primary) 0%, #0f172a 100%); color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .logo-text h1 { font-size: 20px; font-weight: 700; } .logo-text p { font-size: 12px; opacity: 0.8; }
+    
+    main { flex: 1; max-width: 1200px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1.5fr; gap: 30px; width: 100%; }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+    
+    .card { background: var(--card-bg); border-radius: 16px; padding: 30px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 20px; }
+    .card-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+    
+    /* Room Dashboard Styles */
+    .room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .hostel-box { padding: 20px; border-radius: 12px; border: 2px solid var(--border); }
+    .boys-box { background: #eff6ff; border-color: #3b82f6; }
+    .girls-box { background: #fdf4ff; border-color: #d946ef; }
+    .hostel-title { font-size: 18px; font-weight: 800; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+    .stat-label { color: var(--text-muted); font-weight: 500; }
+    .stat-value { font-weight: 700; font-size: 16px; }
+    .stat-value.good { color: var(--success); }
+    .stat-value.warning { color: var(--warning); }
+    .progress-bg { background: #e2e8f0; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 10px; }
+    .progress-fill { height: 100%; transition: width 0.5s ease; border-radius: 6px; }
+    .boys-fill { background: linear-gradient(90deg, #3b82f6, #1e40af); }
+    .girls-fill { background: linear-gradient(90deg, #d946ef, #a21caf); }
+    
+    .status-indicator { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+    .status-available { background: #d1fae5; color: #065f46; }
+    .status-filling { background: #fef3c7; color: #92400e; }
+    .status-full { background: #fee2e2; color: #991b1b; }
+
+    .input-group { margin-bottom: 20px; }
+    .input-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; color: var(--text-muted); }
+    .input-wrapper { position: relative; }
+    .input-wrapper input { width: 100%; padding: 14px 14px 14px 45px; border: 2px solid var(--border); border-radius: 10px; font-size: 15px; transition: 0.3s; background: #f8fafc; }
+    .input-wrapper input:focus { outline: none; border-color: var(--primary-light); background: white; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    .input-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 18px; }
+    
+    .btn-check { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+    .btn-check:hover { background: var(--primary-light); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+    .btn-check:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; }
+
+    .allotment-letter { display: none; border: 2px solid var(--primary); border-radius: 12px; overflow: hidden; animation: slideUp 0.5s ease; }
+    .allotment-letter.show { display: block; }
+    .letter-header { background: var(--primary); color: white; padding: 20px; text-align: center; }
+    .letter-body { padding: 25px; }
+    
+    .status-banner { padding: 12px; border-radius: 8px; text-align: center; font-weight: 700; font-size: 16px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+    .status-allotted { background: #d1fae5; color: #065f46; border: 2px solid #10b981; }
+    .status-waitlisted { background: #fef3c7; color: #92400e; border: 2px solid #f59e0b; }
+    .status-pending { background: #dbeafe; color: #1e40af; border: 2px solid #3b82f6; }
+
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+    .detail-item { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
+    .detail-item .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; display: block; font-weight: 600; }
+    .detail-item .value { font-size: 15px; font-weight: 700; color: var(--text-main); }
+    
+    .room-highlight { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 25px; border-radius: 10px; text-align: center; margin: 20px 0; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+    .room-highlight .label { font-size: 13px; opacity: 0.95; text-transform: uppercase; font-weight: 600; }
+    .room-highlight .value { font-size: 36px; font-weight: 800; margin-top: 8px; letter-spacing: 2px; }
+
+    .error-message { background: #fee2e2; color: #991b1b; padding: 15px; border-radius: 8px; border-left: 4px solid var(--danger); margin-top: 15px; display: none; }
+    .loading-text { text-align: center; color: var(--text-muted); padding: 20px; }
+
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    footer { text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px; border-top: 1px solid var(--border); background: white; margin-top: auto; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-text">
+      <h1>🏫 GGSIPU East Delhi Campus</h1>
+      <p>Official Hostel Allocation Portal 2026</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="search-section">
+      <!-- LIVE ROOM DASHBOARD -->
+      <div class="card">
+        <h2 class="card-title">📊 Live Room Availability</h2>
+        <div id="roomLoading" class="loading-text">🔄 Loading room data...</div>
+        <div id="roomError" class="error-message"></div>
+        <div class="room-grid" id="roomGrid" style="display: none;">
+          <div class="hostel-box boys-box">
+            <div class="hostel-title">
+              👦 Boys Hostel
+              <span id="boysStatus" class="status-indicator status-available">Available</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Total Capacity:</span>
+              <span class="stat-value" id="boysTotal">-</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Rooms Allotted:</span>
+              <span class="stat-value warning" id="boysAllotted">-</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Seats Remaining:</span>
+              <span class="stat-value good" id="boysAvailable">-</span>
+            </div>
+            <div class="progress-bg">
+              <div class="progress-fill boys-fill" id="boysBar" style="width: 0%;"></div>
+            </div>
+            <p style="margin-top: 10px; font-size: 12px; color: var(--text-muted); text-align: center;">
+              Total Seats: 264 (38 Single + 54 Triple + 16 Four-Seated)
+            </p>
+          </div>
+          
+          <div class="hostel-box girls-box">
+            <div class="hostel-title">
+              👧 Girls Hostel
+              <span id="girlsStatus" class="status-indicator status-available">Available</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Total Capacity:</span>
+              <span class="stat-value" id="girlsTotal">-</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Rooms Allotted:</span>
+              <span class="stat-value warning" id="girlsAllotted">-</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Seats Remaining:</span>
+              <span class="stat-value good" id="girlsAvailable">-</span>
+            </div>
+            <div class="progress-bg">
+              <div class="progress-fill girls-fill" id="girlsBar" style="width: 0%;"></div>
+            </div>
+            <p style="margin-top: 10px; font-size: 12px; color: var(--text-muted); text-align: center;">
+              Total Seats: 176 (22 Single + 30 Triple + 16 Four-Seated)
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATUS CHECK -->
+      <div class="card">
+        <h2 class="card-title">🔍 Check Allocation Status</h2>
+        <div class="input-group">
+          <label for="rollInput">Enter University Roll Number</label>
+          <div class="input-wrapper">
+            <span class="input-icon">🆔</span>
+            <input type="number" id="rollInput" placeholder="e.g., 132162024001">
+          </div>
+        </div>
+        <button class="btn-check" id="checkBtn" onclick="checkStatus()">Check Status</button>
+        <div id="checkError" class="error-message"></div>
+      </div>
+    </div>
+
+    <div class="result-section">
+      <div class="card" style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+        <div class="empty-state" id="emptyState" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          <div style="font-size: 60px; margin-bottom: 15px; opacity: 0.3;">📋</div>
+          <h3 style="margin-bottom: 10px; color: var(--text-main);">Enter your Roll Number</h3>
+          <p>Your official hostel allotment letter will appear here after verification.</p>
+          <p style="margin-top: 15px; font-size: 13px; color: var(--text-muted);">
+            <strong>Demo Roll Numbers:</strong><br>
+            132162024001 (Sai Reddy - High Priority)<br>
+            132162024002 (Diya Sharma - Medical)<br>
+            132162024014 (Vivaan Singh - Low Priority)
+          </p>
+        </div>
+
+        <div class="allotment-letter" id="allotmentLetter">
+          <div class="letter-header">
+            <h2>🎓 HOSTEL ALLOCATION STATUS</h2>
+            <p>Guru Gobind Singh Indraprastha University, EDC</p>
+          </div>
+          <div class="letter-body">
+            <div class="status-banner" id="statusBanner">STATUS</div>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="label">Student Name</span>
+                <span class="value" id="resName">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Roll Number</span>
+                <span class="value" id="resRoll">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Application Date</span>
+                <span class="value" id="resDate">-</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Hostel Block</span>
+                <span class="value" id="resBlock">-</span>
+              </div>
+            </div>
+            <div id="roomSection" style="display: none;">
+              <div class="room-highlight">
+                <div class="label">🎉 Allocated Room Number</div>
+                <div class="value" id="resRoom">-</div>
+              </div>
+              <p style="text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 15px; padding: 15px; background: #f0fdf4; border-radius: 8px;">
+                ✅ Congratulations! Please report to the Chief Warden's office with your ID card and fee receipt to collect your room keys.
+              </p>
+            </div>
+            <div id="waitlistSection" style="display: none;">
+              <div style="background: #fffbeb; padding: 20px; border-radius: 8px; border-left: 4px solid var(--warning);">
+                <strong style="color: #92400e; font-size: 16px;"> Currently Waitlisted</strong>
+                <p style="font-size: 13px; color: #92400e; margin-top: 10px; line-height: 1.6;">
+                  Your application is under review. Final allocation will be announced on <strong>August 30, 2026</strong> based on priority scoring (distance, medical needs, category). You will be notified via your university email.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p><strong>Chief Warden:</strong> Dr. Rahul Johari | <strong>Girls Warden:</strong> Ar. Deekshali Anand | <strong>Boys Warden:</strong> Dr. Ravi Butola</p>
+    <p style="margin-top: 5px;">© 2026 GGSIPU East Delhi Campus. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // ⚠️ PASTE YOUR DEPLOYED GOOGLE APPS SCRIPT WEB APP URL HERE ⚠️
+    const API_URL = "https://script.google.com/macros/s/AKfycbxWF-sSXN2iSuZFJkgzRJqIoY-FUOQvzC84mI71kqLqm40PaGqrtUGU0dBzbtv2TRcQ/exec";
+
+    // 1. LOAD ROOM AVAILABILITY ON PAGE LOAD
+    async function loadRoomAvailability() {
+      const loadingEl = document.getElementById('roomLoading');
+      const errorEl = document.getElementById('roomError');
+      const gridEl = document.getElementById('roomGrid');
+      
+      try {
+        const response = await fetch(`${API_URL}?action=rooms`);
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        // Update Boys Hostel
+        document.getElementById('boysTotal').innerText = data.boys.total;
+        document.getElementById('boysAllotted').innerText = data.boys.allotted;
+        document.getElementById('boysAvailable').innerText = data.boys.available;
+        
+        const boysPercent = (data.boys.allotted / data.boys.total) * 100;
+        document.getElementById('boysBar').style.width = `${boysPercent}%`;
+        
+        // Update status indicator
+        const boysStatus = document.getElementById('boysStatus');
+        if (data.boys.available > 50) {
+          boysStatus.className = 'status-indicator status-available';
+          boysStatus.innerText = 'Good Availability';
+        } else if (data.boys.available > 0) {
+          boysStatus.className = 'status-indicator status-filling';
+          boysStatus.innerText = 'Filling Fast';
+        } else {
+          boysStatus.className = 'status-indicator status-full';
+          boysStatus.innerText = 'Full';
+        }
+        
+        // Update Girls Hostel
+        document.getElementById('girlsTotal').innerText = data.girls.total;
+        document.getElementById('girlsAllotted').innerText = data.girls.allotted;
+        document.getElementById('girlsAvailable').innerText = data.girls.available;
+        
+        const girlsPercent = (data.girls.allotted / data.girls.total) * 100;
+        document.getElementById('girlsBar').style.width = `${girlsPercent}%`;
+        
+        const girlsStatus = document.getElementById('girlsStatus');
+        if (data.girls.available > 50) {
+          girlsStatus.className = 'status-indicator status-available';
+          girlsStatus.innerText = 'Good Availability';
+        } else if (data.girls.available > 0) {
+          girlsStatus.className = 'status-indicator status-filling';
+          girlsStatus.innerText = 'Filling Fast';
+        } else {
+          girlsStatus.className = 'status-indicator status-full';
+          girlsStatus.innerText = 'Full';
+        }
+        
+        // Hide loading, show grid
+        loadingEl.style.display = 'none';
+        gridEl.style.display = 'grid';
+        
+      } catch (error) {
+        console.error("Error loading room data:", error);
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorEl.innerHTML = `<strong>️ Unable to load room data</strong><br>${error.message}<br><small>Please check your internet connection or refresh the page.</small>`;
+      }
+    }
+
+    // 2. CHECK STUDENT STATUS
+    async function checkStatus() {
+      const roll = document.getElementById('rollInput').value.trim();
+      const btn = document.getElementById('checkBtn');
+      const errorEl = document.getElementById('checkError');
+      
+      errorEl.style.display = 'none';
+      
+      if (!roll) { 
+        errorEl.style.display = 'block';
+        errorEl.innerHTML = '<strong>Please enter a Roll Number</strong>';
+        return; 
+      }
+
+      btn.disabled = true; 
+      btn.innerText = "Verifying...";
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('allotmentLetter').classList.remove('show');
+
+      try {
+        const response = await fetch(`${API_URL}?roll=${encodeURIComponent(roll)}`);
+        const data = await response.json();
+        renderLetter(data);
+      } catch (error) { 
+        console.error("Error:", error);
+        errorEl.style.display = 'block';
+        errorEl.innerHTML = `<strong>️ Connection Error</strong><br>Unable to connect to server. Please check your internet connection.`;
+      } finally { 
+        btn.disabled = false; 
+        btn.innerText = "Check Status"; 
+      }
+    }
+
+    function renderLetter(data) {
+      const letter = document.getElementById('allotmentLetter');
+      const emptyState = document.getElementById('emptyState');
+      const errorEl = document.getElementById('checkError');
+      
+      if (!data.found) {
+        emptyState.style.display = 'block';
+        emptyState.innerHTML = `
+          <div style="font-size:60px; margin-bottom:15px;">❌</div>
+          <h3 style="color:var(--danger); margin-bottom:10px;">Application Not Found</h3>
+          <p style="margin-bottom:15px;">No record found for Roll Number: <strong>${document.getElementById('rollInput').value}</strong></p>
+          <p style="font-size:13px; color:var(--text-muted);">
+            Please check your roll number or ensure you have submitted the application form.<br><br>
+            <strong>Try these demo roll numbers:</strong><br>
+            132162024001 | 132162024002 | 132162024014
+          </p>
+        `;
+        letter.classList.remove('show');
+        return;
+      }
+
+      const status = (data.status || 'Waitlisted').toLowerCase();
+      document.getElementById('resName').innerText = data.name || 'N/A';
+      document.getElementById('resRoll').innerText = data.roll || 'N/A';
+      document.getElementById('resDate').innerText = data.submittedDate ? new Date(data.submittedDate).toLocaleDateString() : 'N/A';
+      
+      const gender = (data.gender || '').toLowerCase();
+      document.getElementById('resBlock').innerText = gender.includes('male') ? 'Boys Hostel (Block B)' : 'Girls Hostel (Block G)';
+
+      const banner = document.getElementById('statusBanner');
+      banner.className = `status-banner status-${status}`;
+      banner.innerText = `Status: ${status}`;
+
+      if (status === 'allotted') {
+        document.getElementById('roomSection').style.display = 'block';
+        document.getElementById('waitlistSection').style.display = 'none';
+        document.getElementById('resRoom').innerText = data.room || 'TBA';
+      } else if (status === 'waitlisted') {
+        document.getElementById('roomSection').style.display = 'none';
+        document.getElementById('waitlistSection').style.display = 'block';
+      } else {
+        document.getElementById('roomSection').style.display = 'none';
+        document.getElementById('waitlistSection').style.display = 'block';
+      }
+
+      emptyState.style.display = 'none';
+      letter.classList.add('show');
+    }
+    
+    // Allow Enter key to submit
+    document.getElementById('rollInput').addEventListener('keypress', function(e) { 
+      if (e.key === 'Enter') checkStatus(); 
+    });
+    
+    // Load room data on page load
+    window.addEventListener('DOMContentLoaded', loadRoomAvailability);
+  </script>
+</body>
+</html>
