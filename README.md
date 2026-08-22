@@ -86,23 +86,23 @@ Administrative actions and allocation runs are recorded in an audit log, providi
                                         API Requests
                                               │
                                               ▼
-                                ┌──────────────────────────┐
-                                │    Google Apps Script    │
-                                │         Backend          │
-                                │                          │
-                                │ • Status Lookup          │
-                                │ • Room Availability      │
-                                │ • Allocation Algorithm   │
-                                │ • Email Notifications    │
-                                │ • Admin Functions        │
-                                │ • Audit Logging          │
-                                └────────────┬─────────────┘
-                                             │
-                                             ▼
-                                ┌──────────────────────────┐
-                                │      Google Sheets       │
-                                │    Application Data      │
-                                └──────────────────────────┘
+                                 ┌──────────────────────────┐
+                                 │    Google Apps Script    │
+                                 │         Backend          │
+                                 │                          │
+                                 │ • Status Lookup          │
+                                 │ • Room Availability      │
+                                 │ • Allocation Algorithm   │
+                                 │ • Email Notifications    │
+                                 │ • Admin Functions        │
+                                 │ • Audit Logging          │
+                                 └────────────┬─────────────┘
+                                              │
+                                              ▼
+                                 ┌──────────────────────────┐
+                                 │      Google Sheets       │
+                                 │    Application Data      │
+                                 └──────────────────────────┘
 ```
 
 ### Technology Stack
