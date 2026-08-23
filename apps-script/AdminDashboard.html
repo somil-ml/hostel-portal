@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    :root {
+      --primary: #f5a623;
+      --dark: #1f2933;
+      --muted: #6b7280;
+      --bg: #f7f8fa;
+      --card: #ffffff;
+      --border: #e5e7eb;
+      --allotted: #16a34a;
+      --waitlisted: #d97706;
+      --rejected: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      margin: 0;
+      padding: 24px;
+    }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    #loginCard { max-width: 360px; margin: 60px auto; text-align: center; }
+    input[type=password], input[type=text] {
+      width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;
+      font-size: 14px; margin-top: 8px;
+    }
+    button {
+      background: var(--primary); color: #1f2933; border: none; padding: 10px 16px;
+      border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;
+    }
+    button.secondary { background: #eef0f2; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .error { color: var(--rejected); font-size: 13px; margin-top: 8px; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    .toolbar select { padding: 8px; border-radius: 6px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+    .badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; color: #fff; }
+    .badge.Allotted { background: var(--allotted); }
+    .badge.Waitlisted { background: var(--waitlisted); }
+    .badge.Rejected { background: var(--rejected); }
+    .badge.Pending { background: var(--muted); }
+    .badge.NotEligible { background: #64748b; }
+    .badge.ResultsPending { background: #2563eb; }
+    .inventory-grid { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 8px; align-items: center; font-size: 13px; }
+    .inventory-grid .head { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .inventory-grid input { margin: 0; width: 100%; }
+    .inventory-note { color: var(--muted); font-size: 12px; margin-top: 10px; line-height: 1.5; }
+    .publish-bar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .publish-state { font-weight:700; font-size:13px; }
+    .state-hidden { color:#2563eb; }
+    .state-published { color:#16a34a; }
+    .row-edit select, .row-edit input { font-size: 12px; padding: 4px; }
+    .stats { display: flex; gap: 16px; flex-wrap: wrap; }
+    .stat { flex: 1; min-width: 120px; text-align: center; padding: 10px; }
+    .stat .num { font-size: 22px; font-weight: 700; }
+    .stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+    #statusMsg { font-size: 13px; margin-top: 8px; color: var(--muted); }
+    .audit-item { font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+    .audit-item .meta { color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <div id="loginCard" class="card">
+    <h1>Admin Login</h1>
+    <div class="subtitle">Hostel Allocation & Management System</div>
+    <input type="password" id="pwInput" placeholder="Admin password" onkeydown="if(event.key==='Enter')login()">
+    <button style="margin-top:12px;width:100%" onclick="login()">Log In</button>
+    <div class="error" id="loginError"></div>
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <h1>Hostel Allocation – Admin Dashboard</h1>
+    <div class="subtitle">GGSIPU East Delhi Campus</div>
+
+    <div class="card stats" id="statsBar"></div>
+
+    <div class="card">
+      <h1 style="font-size:15px">Available Room Inventory</h1>
+      <div class="subtitle">The university's published figures are total infrastructure. Set how many rooms are actually available for this allocation cycle.</div>
+      <div class="inventory-grid">
+        <div class="head">Hostel</div><div class="head">Single</div><div class="head">Triple</div><div class="head">Four</div>
+        <div><b>Boys</b> <span id="boysTotalLabel"></span></div>
+        <input id="male_single" type="number" min="0">
+        <input id="male_triple" type="number" min="0">
+        <input id="male_four" type="number" min="0">
+        <div><b>Girls</b> <span id="femaleTotalLabel"></span></div>
+        <input id="female_single" type="number" min="0">
+        <input id="female_triple" type="number" min="0">
+        <input id="female_four" type="number" min="0">
+      </div>
+      <div class="inventory-note">Capacity is derived automatically: Single = 1 seat, Triple = 3 seats, Four = 4 seats. Room IDs are generated as neutral allocation IDs such as B-001 / G-001 because physical room numbers were not provided.</div>
+      <button style="margin-top:12px" onclick="saveInventory()">💾 Save Available Inventory</button>
+    </div>
+
+    <div class="card">
+      <div class="publish-bar">
+        <div>
+          <h1 style="font-size:15px">Student Result Release</h1>
+          <div class="subtitle" style="margin-bottom:0">Allocation can be calculated privately. Students only see the final result after you publish it.</div>
+        </div>
+        <div id="publishState" class="publish-state state-hidden">🔒 Results Not Published</div>
+      </div>
+      <div class="toolbar" style="margin-top:14px;margin-bottom:0">
+        <button onclick="runAllocation()">▶ Calculate Allocation</button>
+        <button onclick="publishResults()">📢 Publish Results & Send Emails</button>
+        <button class="secondary" onclick="unpublishResults()">🔒 Hide Results</button>
+        <button class="secondary" onclick="loadApplications(); loadSettings();">⟳ Refresh</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <button class="secondary" onclick="loadApplications()">⟳ Refresh Applications</button>
+        <select id="statusFilter" onchange="renderTable()">
+          <option value="">All statuses</option>
+          <option>Allotted</option>
+          <option>Waitlisted</option>
+          <option>Pending</option>
+          <option>Not Eligible</option>
+          <option>Rejected</option>
+        </select>
+        <select id="genderFilter" onchange="renderTable()">
+          <option value="">All genders</option>
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+      </div>
+      <div id="statusMsg"></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Roll No</th><th>Name</th><th>Gender</th><th>Category</th>
+            <th>Room Type Pref</th><th>Score</th><th>Status</th><th>Room</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="appTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h1 style="font-size:15px">Recent Audit Log</h1>
+      <div id="auditList"></div>
+    </div>
+  </div>
+
+<script>
+  let PW = '';
+  let ALL_ROWS = [];
+
+  function login() {
+    const pw = document.getElementById('pwInput').value;
+    document.getElementById('loginError').textContent = '';
+    google.script.run
+      .withSuccessHandler(function(ok) {
+        if (ok) {
+          PW = pw;
+          sessionStorage.setItem('hostel_admin_pw', pw); // survives refresh, cleared when tab closes
+          document.getElementById('loginCard').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          loadApplications();
+          loadAuditLog();
+          loadSettings();
+        } else {
+          document.getElementById('loginError').textContent = 'Incorrect password.';
+        }
+      })
+      .withFailureHandler(function(err) {
+        document.getElementById('loginError').textContent = err.message;
+      })
+      .adminLogin(pw);
+  }
+
+  // Auto-login if a password is already stashed in this browser tab's session
+  (function tryAutoLogin() {
+    const stashed = sessionStorage.getItem('hostel_admin_pw');
+    if (stashed) {
+      document.getElementById('pwInput').value = stashed;
+      login();
+    }
+  })();
+
+  function loadSettings() {
+    google.script.run
+      .withSuccessHandler(function(cfg) {
+        const total = cfg.total;
+        const available = cfg.available || { Male:{single:'',triple:'',four:''}, Female:{single:'',triple:'',four:''} };
+        document.getElementById('boysTotalLabel').textContent = '(max ' + total.Male.single + '/' + total.Male.triple + '/' + total.Male.four + ')';
+        document.getElementById('femaleTotalLabel').textContent = '(max ' + total.Female.single + '/' + total.Female.triple + '/' + total.Female.four + ')';
+        document.getElementById('male_single').value = available.Male.single ?? '';
+        document.getElementById('male_triple').value = available.Male.triple ?? '';
+        document.getElementById('male_four').value = available.Male.four ?? '';
+        document.getElementById('female_single').value = available.Female.single ?? '';
+        document.getElementById('female_triple').value = available.Female.triple ?? '';
+        document.getElementById('female_four').value = available.Female.four ?? '';
+      })
+      .withFailureHandler(function(err) { setMsg('Inventory error: ' + err.message); })
+      .adminGetInventoryConfig(PW);
+
+    google.script.run
+      .withSuccessHandler(function(state) { updatePublishState(state.published); })
+      .withFailureHandler(function(err) { setMsg('Publication state error: ' + err.message); })
+      .adminGetPublicationState(PW);
+  }
+
+  function saveInventory() {
+    const inventory = {
+      Male: {
+        single: Number(document.getElementById('male_single').value),
+        triple: Number(document.getElementById('male_triple').value),
+        four: Number(document.getElementById('male_four').value)
+      },
+      Female: {
+        single: Number(document.getElementById('female_single').value),
+        triple: Number(document.getElementById('female_triple').value),
+        four: Number(document.getElementById('female_four').value)
+      }
+    };
+    setMsg('Saving available inventory…');
+    google.script.run
+      .withSuccessHandler(function() { setMsg('Available inventory saved.'); loadSettings(); })
+      .withFailureHandler(function(err) { setMsg('Inventory error: ' + err.message); })
+      .adminSetAvailableInventory(PW, inventory);
+  }
+
+  function updatePublishState(published) {
+    const el = document.getElementById('publishState');
+    if (published) {
+      el.textContent = '🟢 Results Published';
+      el.className = 'publish-state state-published';
+    } else {
+      el.textContent = '🔒 Results Not Published';
+      el.className = 'publish-state state-hidden';
+    }
+  }
+
+  function loadApplications() {
+    setMsg('Loading applications…');
+    google.script.run
+      .withSuccessHandler(function(rows) {
+        ALL_ROWS = rows;
+        renderStats(rows);
+        renderTable();
+        setMsg('');
+      })
+      .withFailureHandler(function(err) { setMsg('Error: ' + err.message); })
+      .adminGetAllApplications(PW);
+  }
+
+  function renderStats(rows) {
+    const counts = { Allotted: 0, Waitlisted: 0, Pending: 0, 'Not Eligible': 0, Rejected: 0 };
+    rows.forEach(r => { counts[r.status] = (counts[r.status] || 0) + 1; });
+    const bar = document.getElementById('statsBar');
+    bar.innerHTML = Object.keys(counts).map(k =>
+      '<div class="stat"><div class="num">' + counts[k] + '</div><div class="label">' + k + '</div></div>'
+    ).join('') + '<div class="stat"><div class="num">' + rows.length + '</div><div class="label">Total</div></div>';
+  }
+
+  function renderTable() {
+    const statusF = document.getElementById('statusFilter').value;
+    const genderF = document.getElementById('genderFilter').value;
+    const tbody = document.getElementById('appTableBody');
+    const filtered = ALL_ROWS.filter(r =>
+      (!statusF || r.status === statusF) && (!genderF || r.gender === genderF)
+    );
+    tbody.innerHTML = filtered.map(r => `
+      <tr>
+        <td>${r.roll}</td>
+        <td>${r.name}</td>
+        <td>${r.gender}</td>
+        <td>${r.category || '-'}</td>
+        <td>${r.roomType || '-'}</td>
+        <td>${r.score}</td>
+        <td><span class="badge ${r.status.replace(/\s+/g,'')}">${r.status}</span></td>
+        <td>${r.room}</td>
+        <td class="row-edit">
+          <select id="st_${r.rowNum}">
+            ${['Allotted','Waitlisted','Pending','Not Eligible','Rejected'].map(s =>
+              `<option ${s===r.status?'selected':''}>${s}</option>`).join('')}
+          </select>
+          <input id="rm_${r.rowNum}" type="text" value="${r.room==='-'?'':r.room}" placeholder="Room #" style="width:70px">
+          <button class="secondary" onclick="saveRow(${r.rowNum})">Save</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function saveRow(rowNum) {
+    const newStatus = document.getElementById('st_' + rowNum).value;
+    const newRoom = document.getElementById('rm_' + rowNum).value;
+    setMsg('Saving row ' + rowNum + '…');
+    google.script.run
+      .withSuccessHandler(function() { setMsg('Saved. No email is sent until results are published.'); loadApplications(); loadAuditLog(); })
+      .withFailureHandler(function(err) { setMsg('Error: ' + err.message); })
+      .adminUpdateStatus(PW, rowNum, newStatus, newRoom);
+  }
+
+  function runAllocation() {
+    if (!confirm('Calculate the allocation now? This will update the sheet, but students will NOT see the results and NO emails will be sent until you publish them.')) return;
+    setMsg('Calculating allocation… this can take a moment.');
+    google.script.run
+      .withSuccessHandler(function(result) {
+        setMsg('Allocation calculated. Allotted B:' + result.allottedCount.Male + ' G:' + result.allottedCount.Female +
+               ' | Waitlisted B:' + result.waitlistedCount.Male + ' G:' + result.waitlistedCount.Female +
+               ' | Results remain hidden.');
+        loadApplications(); loadAuditLog(); loadSettings();
+      })
+      .withFailureHandler(function(err) { setMsg('Error: ' + err.message); })
+      .adminRunAllocation(PW);
+  }
+
+  function publishResults() {
+    if (!confirm('Publish the current allocation results? Students will be able to see their final status and notification emails will be sent.')) return;
+    setMsg('Publishing results and sending notification emails…');
+    google.script.run
+      .withSuccessHandler(function(result) {
+        updatePublishState(true);
+        setMsg('Results published. ' + result.sentCount + ' notification email(s) sent.');
+        loadApplications(); loadAuditLog();
+      })
+      .withFailureHandler(function(err) { setMsg('Error: ' + err.message); })
+      .adminPublishResults(PW);
+  }
+
+  function unpublishResults() {
+    if (!confirm('Hide results from students? This does not undo allocation or erase sent emails.')) return;
+    setMsg('Hiding student-facing results…');
+    google.script.run
+      .withSuccessHandler(function() { updatePublishState(false); setMsg('Results are hidden from students.'); loadAuditLog(); })
+      .withFailureHandler(function(err) { setMsg('Error: ' + err.message); })
+      .adminUnpublishResults(PW);
+  }
+
+  function loadAuditLog() {
+    google.script.run
+      .withSuccessHandler(function(entries) {
+        document.getElementById('auditList').innerHTML = entries.map(e =>
+          `<div class="audit-item"><b>${e.action}</b> — ${e.details}<div class="meta">${e.actor} · ${new Date(e.timestamp).toLocaleString()}</div></div>`
+        ).join('') || '<div class="subtitle">No audit entries yet.</div>';
+      })
+      .adminGetAuditLog(PW);
+  }
+
+  function setMsg(msg) { document.getElementById('statusMsg').textContent = msg; }
+</script>
+</body>
+</html>
