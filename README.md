@@ -92,10 +92,10 @@ Administrative actions and allocation runs are recorded in an audit log, providi
                  │                          │
                  │ • Status Lookup          │
                  │ • Room Availability      │
-                 │ • Allocation Algorithm    │
+                 │ • Allocation Algorithm   │
                  │ • Email Notifications    │
-                 │ • Admin Functions         │
-                 │ • Audit Logging           │
+                 │ • Admin Functions        │
+                 │ • Audit Logging          │
                  └────────────┬─────────────┘
                               │
                               ▼
