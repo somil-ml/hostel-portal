@@ -277,9 +277,13 @@ Configured by hostel administrator
         }
         
         // Update Boys Hostel
-        document.getElementById('boysTotal').innerText = data.boys.total;
-        document.getElementById('boysAllotted').innerText = data.boys.allotted;
-        document.getElementById('boysAvailable').innerText = data.boys.available;
+        document.getElementById('boysRooms').innerText =
+  `${data.boys.byType.single.rooms} Single • ` +
+  `${data.boys.byType.triple.rooms} Triple • ` +
+  `${data.boys.byType.four.rooms} Four`;
+  
+document.getElementById('boysAllotted').innerText = data.boys.allotted;
+document.getElementById('boysAvailable').innerText = data.boys.available;
         
         const boysPercent = (data.boys.allotted / data.boys.total) * 100;
         document.getElementById('boysBar').style.width = `${boysPercent}%`;
@@ -298,9 +302,13 @@ Configured by hostel administrator
         }
         
         // Update Girls Hostel
-        document.getElementById('girlsTotal').innerText = data.girls.total;
-        document.getElementById('girlsAllotted').innerText = data.girls.allotted;
-        document.getElementById('girlsAvailable').innerText = data.girls.available;
+        document.getElementById('girlsRooms').innerText =
+  `${data.girls.byType.single.rooms} Single • ` +
+  `${data.girls.byType.triple.rooms} Triple • ` +
+  `${data.girls.byType.four.rooms} Four`;
+
+document.getElementById('girlsAllotted').innerText = data.girls.allotted;
+document.getElementById('girlsAvailable').innerText = data.girls.available;
         
         const girlsPercent = (data.girls.allotted / data.girls.total) * 100;
         document.getElementById('girlsBar').style.width = `${girlsPercent}%`;
