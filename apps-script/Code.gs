@@ -674,6 +674,38 @@ function adminGetPublicationState(password) {
   return { published: isResultsPublished_() };
 }
 
+function resetAutomaticAllocations_() {
+  const sheet = getResponseSheet_();
+  const data = sheet.getDataRange().getValues();
+  const headers = trimmedHeaders_(data[0]);
+
+  const statusCol = col_(headers, 'Status');
+  const roomCol = col_(headers, 'Room Number');
+
+  for (let i = 1; i < data.length; i++) {
+    const status = String(data[i][statusCol] || '').trim();
+    const room = String(data[i][roomCol] || '').trim();
+
+    // Do not touch rejected applications.
+    if (status === 'Rejected') continue;
+
+    // Clear previous allocation results.
+    if (
+      status === 'Allotted' ||
+      status === 'Waitlisted' ||
+      status === 'Not Eligible'
+    ) {
+      sheet.getRange(i + 1, statusCol + 1).setValue('Pending');
+      sheet.getRange(i + 1, roomCol + 1).setValue('N/A');
+    }
+  }
+
+  // Previous allocation is no longer the current prepared allocation.
+  PropertiesService
+    .getScriptProperties()
+    .setProperty(PROP_ALLOCATION_PREPARED, 'false');
+}
+
 function adminRunAllocation(password) {
   if (!checkAdminPassword_(password)) throw new Error('Invalid admin password.');
   if (isResultsPublished_()) {
