@@ -812,16 +812,50 @@ function adminPublishResults(password) {
   };
 }
 
-function adminUnpublishResults(password) {
-  if (!checkAdminPassword_(password)) throw new Error('Invalid admin password.');
-  setResultsPublished_(false);
-  logAudit_('Admin', 'Unpublish Results', 'Student-facing results hidden.');
-  return { published: false };
-}
+function publishResults() {
+  const publishedText =
+    'Results are already published.\n\n' +
+    'Publishing again will resend the current allocation emails to students.\n\n' +
+    'Do you want to continue?';
 
-// Testing helper: clears the notification tracker without changing allocation results.
-function resetNotificationTracker() {
-  PropertiesService.getScriptProperties().deleteProperty('NOTIFIED_MAP');
+  const unpublishedText =
+    'Publish the current allocation results?\n\n' +
+    'Students will be able to see their final status and notification emails will be sent.';
+
+  const message = document.getElementById('publishState').textContent
+    .includes('Published')
+    ? publishedText
+    : unpublishedText;
+
+  if (!confirm(message)) return;
+
+  setMsg('Publishing results and sending notification emails…');
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      updatePublishState(true);
+
+      if (result.resent) {
+        setMsg(
+          'Results republished. ' +
+          result.sentCount +
+          ' notification email(s) sent again.'
+        );
+      } else {
+        setMsg(
+          'Results published. ' +
+          result.sentCount +
+          ' notification email(s) sent.'
+        );
+      }
+
+      loadApplications();
+      loadAuditLog();
+    })
+    .withFailureHandler(function(err) {
+      setMsg('Error: ' + err.message);
+    })
+    .adminPublishResults(PW);
 }
 
 function adminGetAuditLog(password) {
