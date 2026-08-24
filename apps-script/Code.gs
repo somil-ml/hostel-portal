@@ -731,40 +731,85 @@ function adminRunAllocation(password) {
 }
 
 function adminPublishResults(password) {
-  if (!checkAdminPassword_(password)) throw new Error('Invalid admin password.');
-  if (isResultsPublished_()) throw new Error('Results are already published.');
-  if (PropertiesService.getScriptProperties().getProperty(PROP_ALLOCATION_PREPARED) !== 'true') {
+  if (!checkAdminPassword_(password)) {
+    throw new Error('Invalid admin password.');
+  }
+
+  if (PropertiesService.getScriptProperties()
+      .getProperty(PROP_ALLOCATION_PREPARED) !== 'true') {
     throw new Error('Run Calculate Allocation first.');
   }
+
+  const wasAlreadyPublished = isResultsPublished_();
+
   const sheet = getResponseSheet_();
   const data = sheet.getDataRange().getValues();
   const headers = trimmedHeaders_(data[0]);
+
   const rollCol = col_(headers, 'Roll Number / Registration Number');
   const nameCol = col_(headers, 'Full Name (as per University Records)');
   const statusCol = col_(headers, 'Status');
   const roomCol = col_(headers, 'Room Number');
   const emailCols = getEmailColumns_(headers);
 
+  // Safety check: every allotted student must have a room.
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     const status = row[statusCol];
-    if (status === 'Allotted' && (!row[roomCol] || String(row[roomCol]).trim().toUpperCase() === 'N/A')) {
-      throw new Error('Cannot publish: Roll ' + row[rollCol] + ' is Allotted but has no room ID.');
+
+    if (
+      status === 'Allotted' &&
+      (!row[roomCol] ||
+       String(row[roomCol]).trim().toUpperCase() === 'N/A')
+    ) {
+      throw new Error(
+        'Cannot publish: Roll ' +
+        row[rollCol] +
+        ' is Allotted but has no room ID.'
+      );
     }
   }
 
   let sentCount = 0;
+
+  // Send emails for the CURRENT allocation.
+  // Unlike maybeNotify_(), this deliberately sends again.
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     const status = row[statusCol];
-    if (['Allotted', 'Waitlisted', 'Not Eligible', 'Rejected'].includes(status)) {
-      const sent = maybeNotify_(row[rollCol], status, resolveEmail_(row, emailCols), row[nameCol], row[roomCol]);
+
+    if (
+      ['Allotted', 'Waitlisted', 'Not Eligible', 'Rejected']
+        .includes(status)
+    ) {
+      const sent = sendStatusEmail_(
+        resolveEmail_(row, emailCols),
+        row[nameCol],
+        row[rollCol],
+        status,
+        row[roomCol]
+      );
+
       if (sent) sentCount++;
     }
   }
+
+  // Make the current allocation visible to students.
   setResultsPublished_(true);
-  logAudit_('Admin', 'Publish Results', sentCount + ' notification emails sent.');
-  return { published: true, sentCount };
+
+  logAudit_(
+    'Admin',
+    wasAlreadyPublished
+      ? 'Republish Results'
+      : 'Publish Results',
+    sentCount + ' notification emails sent.'
+  );
+
+  return {
+    published: true,
+    resent: wasAlreadyPublished,
+    sentCount: sentCount
+  };
 }
 
 function adminUnpublishResults(password) {
