@@ -676,10 +676,25 @@ function adminGetPublicationState(password) {
 
 function adminRunAllocation(password) {
   if (!checkAdminPassword_(password)) throw new Error('Invalid admin password.');
-  if (isResultsPublished_()) throw new Error('Results are already published. Hide the results before recalculating.');
-  if (!getAvailableInventory_()) throw new Error('Set the available room inventory before running allocation.');
+  if (isResultsPublished_()) {
+    throw new Error('Results are currently published. Hide the results before recalculating.');
+  }
+  if (!getAvailableInventory_()) {
+    throw new Error('Set the available room inventory before running allocation.');
+  }
+
+  // Clear previous automatic allocation results so the algorithm
+  // recalculates from the CURRENT application data and inventory.
+  resetAutomaticAllocations_();
+
   const result = runAllocationCore_('Admin (dashboard)');
-  logAudit_('Admin', 'Allocation Prepared', 'Results calculated but not published.');
+
+  logAudit_(
+    'Admin',
+    'Allocation Prepared',
+    'Fresh allocation calculated from current data and inventory.'
+  );
+
   return result;
 }
 
