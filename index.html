@@ -60,6 +60,18 @@
     .status-waitlisted { background: #fef3c7; color: #92400e; border: 2px solid #f59e0b; }
     .status-pending { background: #dbeafe; color: #1e40af; border: 2px solid #3b82f6; }
 
+    .status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 2px solid #ef4444;
+}
+
+.status-not-eligible {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 2px solid #ef4444;
+}
+
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
     .detail-item { background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
     .detail-item .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; display: block; font-weight: 600; }
@@ -226,13 +238,15 @@
               </p>
             </div>
             <div id="waitlistSection" style="display: none;">
-              <div style="background: #fffbeb; padding: 20px; border-radius: 8px; border-left: 4px solid var(--warning);">
-                <strong style="color: #92400e; font-size: 16px;"> Currently Waitlisted</strong>
-                <p style="font-size: 13px; color: #92400e; margin-top: 10px; line-height: 1.6;">
-                  Your application is under review. Final allocation will be announced on <strong>August 30, 2026</strong> based on priority scoring (distance, medical needs, category). You will be notified via your university email.
-                </p>
-              </div>
-            </div>
+  <div style="background: #fffbeb; padding: 20px; border-radius: 8px; border-left: 4px solid var(--warning);">
+    <strong style="color: #92400e; font-size: 16px;">Currently Waitlisted</strong>
+    <p style="font-size: 13px; color: #92400e; margin-top: 10px; line-height: 1.6;">
+      Your application is currently waitlisted. You will be notified if your allocation status changes.
+    </p>
+  </div>
+</div>
+
+<div id="statusMessage" style="display: none;"></div>
           </div>
         </div>
       </div>
@@ -369,29 +383,106 @@
         return;
       }
 
-      const status = (data.status || 'Waitlisted').toLowerCase();
-      document.getElementById('resName').innerText = data.name || 'N/A';
-      document.getElementById('resRoll').innerText = data.roll || 'N/A';
-      document.getElementById('resDate').innerText = data.submittedDate ? new Date(data.submittedDate).toLocaleDateString() : 'N/A';
-      
-      const gender = (data.gender || '').toLowerCase();
-      document.getElementById('resBlock').innerText = gender.includes('male') ? 'Boys Hostel (Block B)' : 'Girls Hostel (Block G)';
+      const status = (data.status || 'Pending').toLowerCase();
 
-      const banner = document.getElementById('statusBanner');
-      banner.className = `status-banner status-${status}`;
-      banner.innerText = `Status: ${status}`;
+document.getElementById('resName').innerText = data.name || 'N/A';
+document.getElementById('resRoll').innerText = data.roll || 'N/A';
+document.getElementById('resDate').innerText =
+  data.submittedDate
+    ? new Date(data.submittedDate).toLocaleDateString()
+    : 'N/A';
 
-      if (status === 'allotted') {
-        document.getElementById('roomSection').style.display = 'block';
-        document.getElementById('waitlistSection').style.display = 'none';
-        document.getElementById('resRoom').innerText = data.room || 'TBA';
-      } else if (status === 'waitlisted') {
-        document.getElementById('roomSection').style.display = 'none';
-        document.getElementById('waitlistSection').style.display = 'block';
-      } else {
-        document.getElementById('roomSection').style.display = 'none';
-        document.getElementById('waitlistSection').style.display = 'block';
-      }
+const gender = (data.gender || '').toLowerCase();
+
+document.getElementById('resBlock').innerText =
+  gender.includes('male')
+    ? 'Boys Hostel (Block B)'
+    : 'Girls Hostel (Block G)';
+
+const banner = document.getElementById('statusBanner');
+banner.className = `status-banner status-${status}`;
+banner.innerText = `Status: ${status}`;
+
+// Hide all status-specific sections first
+document.getElementById('roomSection').style.display = 'none';
+document.getElementById('waitlistSection').style.display = 'none';
+
+const statusMessage = document.getElementById('statusMessage');
+
+statusMessage.style.display = 'block';
+statusMessage.style.padding = '20px';
+statusMessage.style.borderRadius = '8px';
+statusMessage.style.marginTop = '20px';
+statusMessage.style.lineHeight = '1.6';
+
+if (status === 'allotted') {
+
+  document.getElementById('roomSection').style.display = 'block';
+  statusMessage.style.display = 'none';
+
+  document.getElementById('resRoom').innerText = data.room || 'N/A';
+
+} else if (status === 'waitlisted') {
+
+  document.getElementById('waitlistSection').style.display = 'block';
+  statusMessage.style.display = 'none';
+
+} else if (status === 'not eligible') {
+
+  statusMessage.style.background = '#fee2e2';
+  statusMessage.style.borderLeft = '4px solid #ef4444';
+
+  statusMessage.innerHTML = `
+    <strong style="color:#991b1b; font-size:16px;">
+      Not Eligible
+    </strong>
+    <p style="font-size:13px; color:#991b1b; margin-top:10px;">
+      Your application is not eligible for hostel allocation under the current eligibility criteria.
+    </p>
+  `;
+
+} else if (status === 'rejected') {
+
+  statusMessage.style.background = '#fee2e2';
+  statusMessage.style.borderLeft = '4px solid #ef4444';
+
+  statusMessage.innerHTML = `
+    <strong style="color:#991b1b; font-size:16px;">
+      Application Rejected
+    </strong>
+    <p style="font-size:13px; color:#991b1b; margin-top:10px;">
+      Your hostel application has been rejected.
+    </p>
+  `;
+
+} else if (status === 'pending') {
+
+  statusMessage.style.background = '#dbeafe';
+  statusMessage.style.borderLeft = '4px solid #3b82f6';
+
+  statusMessage.innerHTML = `
+    <strong style="color:#1e40af; font-size:16px;">
+      Results Pending
+    </strong>
+    <p style="font-size:13px; color:#1e40af; margin-top:10px;">
+      Hostel allocation results have not been published yet. Please check again later.
+    </p>
+  `;
+
+} else {
+
+  statusMessage.style.background = '#f8fafc';
+  statusMessage.style.borderLeft = '4px solid #64748b';
+
+  statusMessage.innerHTML = `
+    <strong style="font-size:16px;">
+      Status Update
+    </strong>
+    <p style="font-size:13px; margin-top:10px;">
+      Your application status is currently being processed.
+    </p>
+  `;
+}
 
       emptyState.style.display = 'none';
       letter.classList.add('show');
