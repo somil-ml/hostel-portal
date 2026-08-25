@@ -25,7 +25,6 @@ const CONFIG = {
   },
 
   UNIVERSITY_NAME: 'Guru Gobind Singh Indraprastha University, East Delhi Campus',
-  FINAL_ALLOCATION_DATE: 'August 30, 2026',
 
   // Students whose Distance field exactly matches this are local/day-scholars and
   // are not eligible for a hostel seat UNLESS they have a genuine special
@@ -812,6 +811,26 @@ function adminPublishResults(password) {
   };
 }
 
+function adminUnpublishResults(password) {
+  if (!checkAdminPassword_(password)) {
+    throw new Error('Invalid admin password.');
+  }
+
+  // Hide results from students without changing
+  // any allocation, room assignments, or statuses.
+  setResultsPublished_(false);
+
+  logAudit_(
+    'Admin',
+    'Unpublish Results',
+    'Student-facing results hidden.'
+  );
+
+  return {
+    published: false
+  };
+}
+
 function publishResults() {
   const publishedText =
     'Results are already published.\n\n' +
@@ -856,6 +875,11 @@ function publishResults() {
       setMsg('Error: ' + err.message);
     })
     .adminPublishResults(PW);
+}
+
+// Testing helper: clears the notification tracker without changing allocation results.
+function resetNotificationTracker() {
+  PropertiesService.getScriptProperties().deleteProperty('NOTIFIED_MAP');
 }
 
 function adminGetAuditLog(password) {
